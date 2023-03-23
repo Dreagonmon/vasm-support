@@ -1,0 +1,59 @@
+{
+  "name": "vasm-support",
+  "displayName": "vasm support",
+  "description": "virtual game console assembly language",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.76.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "main": "dist/extension_desktop.js",
+  "browser": "dist/extension_browser.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "vasm",
+        "aliases": [
+          "VASM",
+          "vasm"
+        ],
+        "extensions": [
+          ".vasm"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "vasm",
+        "scopeName": "source.vasm",
+        "path": "./syntaxes/vasm.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "vasm",
+        "path": "./snippets/snippets.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run clean && npm run package && npm run package-web",
+    "clean": "rm -r ./dist",
+    "compile": "webpack --config desktop.config.js",
+    "watch": "webpack --config desktop.config.js --watch",
+    "package": "webpack --config desktop.config.js --mode production --devtool hidden-source-map",
+    "compile-web": "webpack --config browser.config.js",
+    "watch-web": "webpack --config browser.config.js --watch",
+    "package-web": "webpack --config browser.config.js --mode production --devtool hidden-source-map"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.76.0",
+    "process": "^0.11.10",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1"
+  }
+}

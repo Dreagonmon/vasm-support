@@ -1,0 +1,76 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "VASM",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#constant"
+		},
+		{
+			"include": "#entity"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#comment"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.control.vasm",
+					"match": "\\b(JUMP|JPEZ|JPGZ|JPLZ|CALL|RETN)\\b"
+				}
+			]
+		},
+		"constant": {
+			"patterns": [
+				{
+					"name": "constant.language.vasm",
+					"match": "\\b(NOPE|EXIT|WKEY|GKEY|TICK|SAVE|LOAD|TILE|STOR|MOVE|ADDI|SUBI|MULI|DIVI|MODI|INVI|DTIL|DNUM|DTXT|DSEL|RAND)\\b"
+				},
+				{
+					"name": "constant.language.numeric",
+					"match": "((\\b[0-9]+\\b)|(\\b0[xX][0-9a-fA-F]+\\b)|(\\b0[bB][10]+\\b))"
+				}
+			]
+		},
+		"entity": {
+			"patterns": [
+				{
+					"name": "entity.name.function.vasm",
+					"match": "(?<=(JUMP|JPEZ|JPGZ|JPLZ|CALL)\\s+)\\bl\\w+\\b"
+				},
+				{
+					"name": "entity.name.function.vasm",
+					"match": "(?<=:)l\\w+\\b"
+				},
+				{
+					"name": "entity.name.tag.vasm",
+					"match": "\\br\\w+\\b"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.vasm",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.vasm",
+					"match": "\\\\."
+				}
+			]
+		},
+		"comment": {
+			"name": "comment.line.semicolon.vasm",
+			"begin": ";",
+			"end": "\n"
+		}
+	},
+	"scopeName": "source.vasm"
+}

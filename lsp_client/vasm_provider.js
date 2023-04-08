@@ -185,6 +185,9 @@ const processCompileError = (document, errs) => {
  * @param {vscode.TextDocument} document 
  */
 export const vasmAnalyseTextDocument = (document) => {
+    if (document.languageId !== LANGUAGE_ID) {
+        return;
+    }
     const id = document.uri.toString();
     if (!documentMap.has(id)) {
         documentMap.set(id, newVASMProviderData());

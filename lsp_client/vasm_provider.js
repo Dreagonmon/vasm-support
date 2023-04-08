@@ -9,6 +9,7 @@ import { processFileContent, getAllLabels, getAllRegisters, VASMCompileError, In
  */
 
 const ANALYSE_DELAY_MS = 1155;
+const LANGUAGE_ID = "vasm";
 
 const INSTRUCTION_DOCS = {
 "NOPE": `NOPE
@@ -212,10 +213,13 @@ export const vasmCloseTextDocument = (document) => {
 };
 
 /**
- * vasmCloseTextDocument
+ * vasmScheduleAnalyseTextDocument
  * @param {vscode.TextDocument} document 
  */
 export const vasmScheduleAnalyseTextDocument = (document) => {
+    if (document.languageId !== LANGUAGE_ID) {
+        return;
+    }
     const id = document.uri.toString();
     if (!documentMap.has(id)) {
         documentMap.set(id, newVASMProviderData());

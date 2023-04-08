@@ -15,3 +15,7 @@ Initial release of vasm-support
 ### 0.0.2
 
 Add diagnostic support
+
+### 0.0.3
+
+Fix problems that effect all other languages...

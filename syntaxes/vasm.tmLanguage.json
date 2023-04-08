@@ -12,6 +12,9 @@
 			"include": "#entity"
 		},
 		{
+			"include": "#variable"
+		},
+		{
 			"include": "#strings"
 		},
 		{
@@ -23,16 +26,16 @@
 			"patterns": [
 				{
 					"name": "keyword.control.vasm",
+					"match": "\\b(NOPE|EXIT|WKEY|GKEY|TICK|SAVE|LOAD|TILE|STOR|MOVE|ADDI|SUBI|MULI|DIVI|MODI|INVI|DTIL|DNUM|DTXT|DSEL|RAND)\\b"
+				},
+				{
+					"name": "keyword.control.vasm",
 					"match": "\\b(JUMP|JPEZ|JPGZ|JPLZ|CALL|RETN)\\b"
 				}
 			]
 		},
 		"constant": {
 			"patterns": [
-				{
-					"name": "constant.language.vasm",
-					"match": "\\b(NOPE|EXIT|WKEY|GKEY|TICK|SAVE|LOAD|TILE|STOR|MOVE|ADDI|SUBI|MULI|DIVI|MODI|INVI|DTIL|DNUM|DTXT|DSEL|RAND)\\b"
-				},
 				{
 					"name": "constant.language.numeric",
 					"match": "((\\b[0-9]+\\b)|(\\b0[xX][0-9a-fA-F]+\\b)|(\\b0[bB][10]+\\b))"
@@ -48,9 +51,13 @@
 				{
 					"name": "entity.name.function.vasm",
 					"match": "(?<=:)l\\w+\\b"
-				},
+				}
+			]
+		},
+		"variable": {
+			"patterns": [
 				{
-					"name": "entity.name.tag.vasm",
+					"name": "variable.other.vasm",
 					"match": "\\br\\w+\\b"
 				}
 			]

@@ -1,5 +1,14 @@
 import * as vscode from "vscode";
-import { processFileContent, getAllLabels, getAllRegisters } from "./as";
+import { processFileContent, getAllLabels, getAllRegisters, VASMCompileError, Instruction } from "./as";
+
+/**
+ * Compressed bookmarks info
+ * @typedef {Object} VASMProviderData
+ * @property {Array<Instruction>} instructions
+ * @property {number} analyseScheduleHandler
+ */
+
+const ANALYSE_DELAY_MS = 1155;
 
 const INSTRUCTION_DOCS = {
 "NOPE": `NOPE
@@ -130,6 +139,102 @@ Use \`r0\` as the seed to generate a random number, stored to \`r0\`.
 `,
 };
 
+/** @type {vscode.DiagnosticCollection} */
+let diagnosticCollection;
+/** @type {Map<string, VASMProviderData>} */
+const documentMap = new Map();
+
+/**
+ * clearErrors
+ * @param {vscode.TextDocument} document 
+ */
+const clearErrors = (document) => {
+    diagnosticCollection.delete(document.uri, undefined);
+};
+
+const newVASMProviderData = () => {
+    return {
+        instructions: [],
+        analyseScheduleHandler: -1,
+    };
+};
+
+/**
+ * processCompileError
+ * @param {vscode.TextDocument} document 
+ * @param {VASMCompileError} errs 
+ */
+const processCompileError = (document, errs) => {
+    /** @type {Array<vscode.Diagnostic>} */
+    const digs = [];
+    let i = 0;
+    while (i < errs.lines.length) {
+        const dig = new vscode.Diagnostic(
+            document.lineAt(errs.lines[ i ]).range,
+            errs.errors[ i ].message,
+        );
+        digs.push(dig);
+        i++;
+    }
+    diagnosticCollection.set(document.uri, digs);
+};
+
+/**
+ * vasmAnalyseTextDocument
+ * @param {vscode.TextDocument} document 
+ */
+export const vasmAnalyseTextDocument = (document) => {
+    const id = document.uri.toString();
+    if (!documentMap.has(id)) {
+        documentMap.set(id, newVASMProviderData());
+    }
+    /** @type {VASMProviderData} */
+    const vasmData = documentMap.get(id);
+    const docs = document.getText();
+    try {
+        processFileContent(docs, vasmData.instructions);
+        clearErrors(document);
+    } catch (e) {
+        // ignore error
+        processCompileError(document, e);
+    }
+};
+
+/**
+ * vasmCloseTextDocument
+ * @param {vscode.TextDocument} document 
+ */
+export const vasmCloseTextDocument = (document) => {
+    const id = document.uri.toString();
+    if (documentMap.has(id)) {
+        documentMap.delete(id);
+    }
+};
+
+/**
+ * vasmCloseTextDocument
+ * @param {vscode.TextDocument} document 
+ */
+export const vasmScheduleAnalyseTextDocument = (document) => {
+    const id = document.uri.toString();
+    if (!documentMap.has(id)) {
+        documentMap.set(id, newVASMProviderData());
+    }
+    /** @type {VASMProviderData} */
+    const vasmData = documentMap.get(id);
+    if (vasmData.analyseScheduleHandler >= 0) {
+        clearTimeout(vasmData.analyseScheduleHandler);
+    }
+    vasmData.analyseScheduleHandler = setTimeout(() => {
+        vasmData.analyseScheduleHandler = -1;
+        vasmAnalyseTextDocument(document);
+    }, ANALYSE_DELAY_MS);
+};
+
+export const vasmCreateDiagnosticCollection = (name = "vasm") => {
+    diagnosticCollection = vscode.languages.createDiagnosticCollection(name);
+};
+
 /**
  * vasmProviderHover
  * @param {vscode.TextDocument} document 
@@ -139,12 +244,11 @@ Use \`r0\` as the seed to generate a random number, stored to \`r0\`.
  */
 export const vasmProviderHover = (document, position, token) => {
     const word = document.getText(document.getWordRangeAtPosition(position));
-    console.log(word);
     if (word in INSTRUCTION_DOCS) {
         return new vscode.Hover(INSTRUCTION_DOCS[word]);
     }
     return null;
-}
+};
 
 /**
  * vasmProviderHover
@@ -161,22 +265,20 @@ export const vasmProvideKeywordCompletionItems = (document, position, token) => 
         inst.items.push(item);
     }
     return inst;
-}
+};
 
 /**
- * vasmProviderHover
+ * vasmProvideLabelCompletionItems
  * @param {vscode.TextDocument} document 
  * @param {vscode.Position} position 
  * @param {vscode.CancellationToken} token 
  * @returns {vscode.CompletionList<vscode.CompletionItem>}
  */
 export const vasmProvideLabelCompletionItems = (document, position, token) => {
-    const instructions = [];
-    const docs = document.getText();
-    try {
-        processFileContent(docs, instructions);
-    } catch {
-        // ignore error
+    const id = document.uri.toString();
+    let instructions = [];
+    if (documentMap.has(id)) {
+        instructions = documentMap.get(id).instructions;
     }
     const labels = getAllLabels(instructions);
     const inst = new vscode.CompletionList();
@@ -185,22 +287,20 @@ export const vasmProvideLabelCompletionItems = (document, position, token) => {
         inst.items.push(item);
     }
     return inst;
-}
+};
 
 /**
- * vasmProviderHover
+ * vasmProvideRegisterCompletionItems
  * @param {vscode.TextDocument} document 
  * @param {vscode.Position} position 
  * @param {vscode.CancellationToken} token 
  * @returns {vscode.CompletionList<vscode.CompletionItem>}
  */
 export const vasmProvideRegisterCompletionItems = (document, position, token) => {
-    const instructions = [];
-    const docs = document.getText();
-    try {
-        processFileContent(docs, instructions);
-    } catch {
-        // ignore error
+    const id = document.uri.toString();
+    let instructions = [];
+    if (documentMap.has(id)) {
+        instructions = documentMap.get(id).instructions;
     }
     const regs = getAllRegisters(instructions);
     const inst = new vscode.CompletionList();
@@ -209,4 +309,4 @@ export const vasmProvideRegisterCompletionItems = (document, position, token) =>
         inst.items.push(item);
     }
     return inst;
-}
+};

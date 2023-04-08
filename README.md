@@ -12,3 +12,6 @@ Users appreciate release notes as you update your extension.
 
 Initial release of vasm-support
 
+### 0.0.2
+
+Add diagnostic support

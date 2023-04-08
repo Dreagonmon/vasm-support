@@ -142,7 +142,7 @@ const assertAndParseAsciiString = (text) => {
     }
 };
 
-class VASMCompileError extends Error {
+export class VASMCompileError extends Error {
     constructor () {
         super();
         /** @type {Array<number>} */
@@ -152,7 +152,7 @@ class VASMCompileError extends Error {
     }
 }
 
-class Instruction {
+export class Instruction {
     constructor (tag, _params) {
         this.tag = tag;
     }
@@ -167,7 +167,7 @@ class Instruction {
     }
 }
 
-class InstLabel extends Instruction {
+export class InstLabel extends Instruction {
     constructor (tag, params) {
         super(tag, params);
         assertIsLabel(tag.substring(1));
@@ -179,7 +179,7 @@ class InstLabel extends Instruction {
     }
 }
 
-class InstZero extends Instruction {
+export class InstZero extends Instruction {
     constructor (tag, params) {
         super(tag, params);
     }
@@ -200,7 +200,8 @@ class InstZero extends Instruction {
         return new Uint8Array([ inst ]);
     }
 }
-class InstOne extends Instruction {
+
+export class InstOne extends Instruction {
     constructor (tag, params) {
         super(tag, params);
         this.label = params;
@@ -277,7 +278,8 @@ class InstOne extends Instruction {
         }
     }
 }
-class InstTwo extends Instruction {
+
+export class InstTwo extends Instruction {
     constructor (tag, params) {
         super(tag, params);
         const param_list = params.split(/\s+/);
@@ -350,7 +352,7 @@ class InstTwo extends Instruction {
     }
 }
 
-class InstMany extends Instruction {
+export class InstMany extends Instruction {
     constructor (tag, params) {
         super(tag, params);
         this.label = null;
@@ -472,12 +474,13 @@ const process_line = (text, instructions) => {
  * read file into instructions
  * @param {string} file_content 
  * @param {Array<Instruction>} instructions 
+ * @throws {VASMCompileError} Compile Error
  */
 export const processFileContent = (file_content, instructions) => {
     const eLineNum = [];
     const eError = [];
     let hasError = false;
-    let line = 1;
+    let line = 0;
     for (const value of file_content.split("\n")) {
         const comment_index = value.indexOf(";");
         const last_index = (comment_index >= 0) ? comment_index : value.length;
@@ -531,6 +534,8 @@ export const processRegisters = (instructions) => {
         }
     });
     assert(regs.size <= REGISTER_CAPACITY, "Too many registers.");
+    const sortedRegs = Array.from(regs);
+    sortedRegs.sort();
     // update registers
     let regnum = REGISTER_BASE;
     for (const reg of regs) {
@@ -564,7 +569,7 @@ export const processLabels = (instructions) => {
 };
 
 /**
- * process labels
+ * build binary
  * @param {Array<Instruction>} instructions 
  * @returns {Uint8Array}
  */
@@ -583,7 +588,7 @@ export const buildBinary = (instructions) => {
         len += part.length;
     }
     return data;
-}
+};
 
 /**
  * get all labels
@@ -598,11 +603,7 @@ export const getAllLabels = (instructions) => {
             labels.add(inst.label);
         }
     });
-    const list = [];
-    for (const label of labels) {
-        list.push(label);
-    }
-    return list;
+    return Array.from(labels);
 };
 
 /**
@@ -625,11 +626,7 @@ export const getAllRegisters = (instructions) => {
             regs.add(reg);
         }
     });
-    const list = [];
-    for (const reg of regs) {
-        list.push(reg);
-    }
-    return list;
+    return Array.from(regs);
 };
 
 const __main__ = async () => {
@@ -641,7 +638,7 @@ const __main__ = async () => {
     } catch (err) {
         console.log("error");
         for (let i = 0; i < err.lines.length; i++) {
-            const line = err.lines[ i ];
+            const line = err.lines[ i ] + 1;
             const errMsg = err.errors[ i ];
             console.error(`> Line ${line}: ${errMsg}`);
             console.error(`  at (file://${await Deno.realPath(Deno.args[ 0 ])}:${line}:0)`);

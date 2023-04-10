@@ -19,3 +19,7 @@ Add diagnostic support
 ### 0.0.3, 0.0.4
 
 Fix problems that effect all other languages...
+
+### 0.0.5
+
+Change `DTIL` parameter, fix memory leak.

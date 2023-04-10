@@ -294,13 +294,7 @@ export class InstTwo extends Instruction {
         } else {
             assertIsRegister(this.param1);
         }
-        if ([ "DTIL" ].includes(tag)) {
-            assertIsNumber(this.param2);
-            this.value2 = parseNumber(this.param2);
-            assert(this.value2 !== null && this.value2 >= 0 && this.value2 <= 63, `${this.param2} out of range [0, 63].`);
-        } else {
-            assertIsRegister(this.param2);
-        }
+        assertIsRegister(this.param2);
     }
     updateRegisterNumber (reg, num) {
         if ([ "STOR" ].includes(this.tag)) {
@@ -312,12 +306,8 @@ export class InstTwo extends Instruction {
                 this.value1 = num;
             }
         }
-        if ([ "DTIL" ].includes(this.tag)) {
-            // do nothing
-        } else {
-            if (reg === this.param2) {
-                this.value2 = num;
-            }
+        if (reg === this.param2) {
+            this.value2 = num;
         }
     }
     getRegisters () {
@@ -329,11 +319,7 @@ export class InstTwo extends Instruction {
         } else {
             regs.push(this.param1);
         }
-        if ([ "DTIL" ].includes(this.tag)) {
-            // do nothing
-        } else {
-            regs.push(this.param2);
-        }
+        regs.push(this.param2);
         return regs;
     }
     getSize () {

@@ -106,11 +106,11 @@ Save to the call stack and jump to the \`loc\`.
 
 Return to the last CALL location.
 `,
-"DTIL": `DTIL \`reg\` \`id\`
+"DTIL": `DTIL \`reg1\` \`reg2\`
 
-Draw the tile (with \`id\` index) to the \`reg\` position.
+Draw the tile (with \`reg2\` ID) to the \`reg1\` position.
 
-\`id\` in range [0, 63].
+ID in range [0, 63].
 
 Position in range [0, 63].
 `,
@@ -196,6 +196,7 @@ export const vasmAnalyseTextDocument = (document) => {
     const vasmData = documentMap.get(id);
     const docs = document.getText();
     try {
+        vasmData.instructions.splice(0, vasmData.instructions.length);
         processFileContent(docs, vasmData.instructions);
         clearErrors(document);
     } catch (e) {

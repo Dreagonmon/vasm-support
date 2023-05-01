@@ -168,10 +168,13 @@ export class Instruction {
 }
 
 export class InstLabel extends Instruction {
-    constructor (tag, params) {
+    constructor (tag, params, comments = []) {
         super(tag, params);
         assertIsLabel(tag.substring(1));
+        /** @type {string} */
         this.label = tag.substring(1);
+        /** @type {Array<string>} */
+        this.commants = Array.from(comments);
     }
     getSize () { return 0; }
     getBytes () {
@@ -429,11 +432,11 @@ export class InstMany extends Instruction {
  * process one line of text
  * @param {string} text 
  * @param {Array<Instruction>} instructions 
+ * @param {Array<string>} commants 
  */
-const process_line = (text, instructions) => {
+const process_line = (text, instructions, commants) => {
     const tag = /([\:\@]?.+?)\b(.*)/.exec(text)[ 1 ];
     if (tag) {
-        // console.log(tag);
         const utag = tag.toUpperCase();
         const params = text.substring(tag.length).trim();
         if (INST_ZERO.includes(utag)) {
@@ -447,7 +450,7 @@ const process_line = (text, instructions) => {
         } else if (INST_MACRO.includes(utag)) {
             // TODO: add macro processer
         } else if (tag.startsWith(":")) {
-            instructions.push(new InstLabel(tag, params));
+            instructions.push(new InstLabel(tag, params, commants));
         } else {
             throw new Error(`Unknown instruction: ${text}`);
         }
@@ -465,20 +468,37 @@ const process_line = (text, instructions) => {
 export const processFileContent = (file_content, instructions) => {
     const eLineNum = [];
     const eError = [];
+    const commants = [];
     let hasError = false;
     let line = 0;
     for (const value of file_content.split("\n")) {
         const comment_index = value.indexOf(";");
+        // add comments
+        if (comment_index >= 0) {
+            const com = value.substring(comment_index + 1);
+            const isLeadingBySpace = /^\s\S+/.exec(com);
+            if (isLeadingBySpace) {
+                commants.push(com.substring(1));
+            } else {
+                commants.push(com);
+            }
+        }
         const last_index = (comment_index >= 0) ? comment_index : value.length;
         const text_line = value.substring(0, last_index).trim();
         if (text_line.length > 0) {
             try {
-                process_line(text_line, instructions);
+                process_line(text_line, instructions, commants);
             } catch (err) {
                 eLineNum.push(line);
                 eError.push(err);
                 hasError = true;
             }
+            // clear comments if any instruction exist.
+            commants.splice(0, commants.length);
+        }
+        if (value.trim().length <= 0) {
+            // clear comments if line is empty.
+            commants.splice(0, commants.length);
         }
         line += 1;
     }
@@ -506,9 +526,7 @@ export const processRegisters = (instructions) => {
     // collect all registers
     const regs = new Set();
     instructions.forEach((inst) => {
-        // console.log(inst);
         for (let reg of inst.getRegisters()) {
-            // console.log(reg);
             if (reg.startsWith("*") || reg.startsWith("&")) {
                 reg = reg.substring(1);
             } else {
@@ -593,6 +611,24 @@ export const getAllLabels = (instructions) => {
 };
 
 /**
+ * get all comments of all labels
+ * @param {Array<Instruction>} instructions
+ * @returns {Map<string, string>}
+ */
+export const getAllLabelComments = (instructions) => {
+    const commants = new Map();
+    instructions.forEach((inst) => {
+        if (inst instanceof InstLabel) {
+            // update all label position
+            const label = inst.label;
+            const commant = inst.commants.join("\n");
+            commants.set(label, commant);
+        }
+    });
+    return commants;
+};
+
+/**
  * get all registers
  * @param {Array<Instruction>} instructions
  * @returns {Array<string>}
@@ -633,12 +669,6 @@ const __main__ = async () => {
     processRegisters(instructions);
     processLabels(instructions);
     await Deno.writeFile("./a.out", buildBinary(instructions));
-    // const f = await Deno.open("./a.out", { write: true, create: true, truncate: true });
-    // for (const ainst of instructions) {
-    //     await f.write(ainst.getBytes());
-    // }
-    // f.close();
-    // console.log(getAllRegisters(instructions));
 };
 
 if (import.meta.main) {
